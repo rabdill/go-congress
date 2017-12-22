@@ -4,4 +4,7 @@ package congress
 type Client struct {
 	// Endpoint is the URL of the ProPublica Congress API
 	Endpoint string
+
+	// Key is the user's ProPublica API key
+	Key string
 }
