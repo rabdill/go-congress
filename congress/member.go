@@ -98,7 +98,7 @@ type MemberDetails struct {
 }
 
 // MemberRole stores information about a candidate's positions in a single
-// session of a single chamber.
+// chamber of a single Congress.
 type MemberRole struct {
 	Congress   string `json:"congress"`
 	Chamber    string `json:"chamber"`
@@ -119,9 +119,8 @@ type MemberRole struct {
 	Fax        string `json:"fax"`
 	Contact    string `json:"contact_form"`
 
-	// Sponsored is the number of bills sponsored in a session.
-	Sponsored int `json:"bills_sponsored"`
-	// Cosponsored is the number of bills sponsored in a session.
+	// Sponsored is the number of bills sponsored in a congress.
+	Sponsored   int `json:"bills_sponsored"`
 	Cosponsored int `json:"bills_cosponsored"`
 
 	MissedVotesPct float32           `json:"missed_votes_pct"`
@@ -130,7 +129,7 @@ type MemberRole struct {
 }
 
 // MemberCommittee is information about a politician's role on a committee
-// in a single session of Congress.
+// in a single congress.
 type MemberCommittee struct {
 	Name string `json:"name"`
 
@@ -141,7 +140,7 @@ type MemberCommittee struct {
 	URL string `json:"api_url"`
 
 	// Side indicates whether the politician was in the majority or minority
-	// on the committee in a single session.
+	// on the committee in a single congress.
 	Side string `json:"side"`
 
 	Title     string `json:"member"`
@@ -151,7 +150,7 @@ type MemberCommittee struct {
 }
 
 // MemberSubcommittee is information about a politician's role on a subcommittee
-// in a single session of Congress.
+// in a single congress.
 type MemberSubcommittee struct {
 	MemberCommittee
 	// Parent indicates the ID of the committee under which this
@@ -176,7 +175,7 @@ type getMembersResults struct {
 }
 
 // GetMembers fetches a list of members of a defined chamber of Congress ("house" or "senate")
-// in a particular session (i.e. 115).
+// in a particular congress (i.e. 115).
 func (c *Client) GetMembers(congress int, chamber string) (members []MemberSummary, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%d/%s/members.json", c.Endpoint, congress, chamber), nil)
@@ -237,4 +236,138 @@ func (c *Client) GetMember(id string) (member MemberDetails, err error) {
 		member = unmarshaled.Results[0]
 	}
 	return
+}
+
+// GetChamberMembersByState fetches basic information about the congressional delegation
+// of a single chamber for a single state
+func (c *Client) GetChamberMembersByState(state, chamber string) (member MemberDetails, err error) {
+	// TODO
+	return
+
+	// client := &http.Client{}
+	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/current.json", c.Endpoint, chamber, state), nil)
+	// if err != nil {
+	// 	return
+	// }
+	// req.Header.Add("X-API-Key", c.Key)
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return
+	// }
+	// var unmarshaled getNewMembersResponse
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return
+	// }
+	// err = json.Unmarshal(body, &unmarshaled)
+	// if err != nil {
+	// 	return
+	// }
+	// if len(unmarshaled.Results) > 0 {
+	// 	member = unmarshaled.Results.Members
+	// }
+	// return
+}
+
+// GetMembersByState fetches basic information about the entire congressional
+// delegation for a single state
+func (c *Client) GetMembersByState(state string) (member MemberDetails, err error) {
+	// TODO
+	return
+
+	// c.GetChamberMembersByState("house", state)
+	// c.GetChamberMembersByState("senate", state)
+}
+
+// GetChamberMembersByDistrict fetches basic information about the congressional delegation
+// of a single chamber for a single district of a state.
+func (c *Client) GetChamberMembersByDistrict(state, district, chamber string) (member MemberDetails, err error) {
+	// TODO
+	return
+
+	// client := &http.Client{}
+	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/%s/current.json", c.Endpoint, chamber, state, district), nil)
+	// if err != nil {
+	// 	return
+	// }
+	// req.Header.Add("X-API-Key", c.Key)
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return
+	// }
+	// var unmarshaled getNewMembersResponse
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return
+	// }
+	// err = json.Unmarshal(body, &unmarshaled)
+	// if err != nil {
+	// 	return
+	// }
+	// if len(unmarshaled.Results) > 0 {
+	// 	member = unmarshaled.Results.Members
+	// }
+	// return
+}
+
+// GetNewMembers fetches basic information about the first-time members
+// of either chamber.
+func (c *Client) GetNewMembers() (member MemberDetails, err error) {
+	// TODO
+	return
+
+	// client := &http.Client{}
+	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/new.json", c.Endpoint), nil)
+	// if err != nil {
+	// 	return
+	// }
+	// req.Header.Add("X-API-Key", c.Key)
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return
+	// }
+	// var unmarshaled getNewMembersResponse
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return
+	// }
+	// err = json.Unmarshal(body, &unmarshaled)
+	// if err != nil {
+	// 	return
+	// }
+	// if len(unmarshaled.Results) > 0 {
+	// 	member = unmarshaled.Results.Members
+	// }
+	// return
+}
+
+// GetDepartingMembers fetches basic information about the outgoing members
+// of both chambers for a particular Congress.
+func (c *Client) GetDepartingMembers(congress int, chamber string) (member MemberDetails, err error) {
+	// TODO
+	return
+
+	// client := &http.Client{}
+	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/%d/%s/members/leaving.json", c.Endpoint, congress, chamber), nil)
+	// if err != nil {
+	// 	return
+	// }
+	// req.Header.Add("X-API-Key", c.Key)
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	return
+	// }
+	// var unmarshaled getNewMembersResponse
+	// body, err := ioutil.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return
+	// }
+	// err = json.Unmarshal(body, &unmarshaled)
+	// if err != nil {
+	// 	return
+	// }
+	// if len(unmarshaled.Results) > 0 {
+	// 	member = unmarshaled.Results.Members
+	// }
+	// return
 }
