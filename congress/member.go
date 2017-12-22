@@ -7,41 +7,17 @@ import (
 	"net/http"
 )
 
-// Member holds the data of a member of Congress
+// Member holds the data of a member of Congress that is sent
+// no matter which method was used to request their data.
 type Member struct {
-	ID           string `json:"id"`
-	Title        string `json:"title"`
-	ShortTitle   string `json:"short_title"`
-	FirstName    string `json:"first_name"`
-	MiddleName   string `json:"middle_name,omitempty"`
-	LastName     string `json:"last_name"`
-	Suffix       string `json:"suffix,omitempty"`
-	Birth        string `json:"date_of_birth"`
-	Party        string `json:"party"`
-	State        string `json:"state,omitempty"`
-	SenateClass  string `json:"senate_class,omitempty"`
-	StateRank    string `json:"state_rank,omitempty"`
-	Leadership   string `json:"leadership_role,omitempty"`
-	InOffice     bool   `json:"in_office"`
-	Seniority    string `json:"seniority,omitempty"`
-	NextElection string `json:"next_election,omitempty"`
-	TotalVotes   int    `json:"total_votes,omitempty"`
-	MissedVotes  int    `json:"missed_votes,omitempty"`
-	PresentVotes int    `json:"present_votes,omitempty"`
-
-	// *tk what's this?
-	OCD string `json:"ocd_id,omitempty"`
-
-	Office string `json:"office,omitempty"`
-	Phone  string `json:"phone,omitempty"`
-	Fax    string `json:"fax,omitempty"`
-
-	// LIS identifies the politician's ID in the congressional
-	// Legislative Information System.
-	LIS string `json:"lis_id,omitempty"`
-
-	MissedVotesPct float32 `json:"missed_votes_pct,omitempty"`
-	VotesWithParty float32 `json:"votes_with_party_pct,omitempty"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name,omitempty"`
+	LastName   string `json:"last_name"`
+	Suffix     string `json:"suffix,omitempty"`
+	Birth      string `json:"date_of_birth"`
+	State      string `json:"state,omitempty"`
+	Leadership string `json:"leadership_role,omitempty"`
+	InOffice   bool   `json:"in_office"`
 
 	Twitter   string `json:"twitter_account,omitempty"`
 	Facebook  string `json:"facebook_account,omitempty"`
@@ -59,24 +35,128 @@ type Member struct {
 	CRP string `json:"crp_id,omitempty"`
 
 	Google string `json:"google_entity_id,omitempty"`
-	FEC    string `json:"fec_candidate_id,omitempty"`
+
+	// Website links to the candidate's official website.
+	Website string `json:"url,omitempty"`
+	RSS     string `json:"rss_url,omitempty"`
+
+	// URL links to the endpoint for information about only this member.
+	URL string `json:"api_uri"`
+}
+
+// MemberSummary holds the data of a member of Congress when sent
+// as part of a collection of multiple members.
+type MemberSummary struct {
+	Member
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	ShortTitle  string `json:"short_title"`
+	SenateClass string `json:"senate_class,omitempty"`
+	StateRank   string `json:"state_rank,omitempty"`
+	Party       string `json:"party"`
+	Office      string `json:"office,omitempty"`
+	Phone       string `json:"phone,omitempty"`
+	Fax         string `json:"fax,omitempty"`
+
+	// Contact links to a candidate's online contact form.
+	Contact string `json:"contact_form,omitempty"`
+
+	TotalVotes     int     `json:"total_votes,omitempty"`
+	MissedVotes    int     `json:"missed_votes,omitempty"`
+	PresentVotes   int     `json:"present_votes,omitempty"`
+	NextElection   string  `json:"next_election,omitempty"`
+	Seniority      string  `json:"seniority,omitempty"`
+	MissedVotesPct float32 `json:"missed_votes_pct,omitempty"`
+	VotesWithParty float32 `json:"votes_with_party_pct,omitempty"`
+
+	// LIS identifies the politician's ID in the congressional
+	// Legislative Information System.
+	LIS string `json:"lis_id,omitempty"`
+
+	FEC string `json:"fec_candidate_id,omitempty"`
 
 	// DWNominate stores a politician's ideological score based on the
 	// DW-NOMINATE (Dynamic Weighted NOMINAl Three-step Estimation) estimation.
 	DWNominate float32 `json:"dw_nominate"`
 
-	// *tk no idea what this is
+	// *tk no idea what these are
 	IdealPoint string `json:"ideal_point"`
+	OCD        string `json:"ocd_id,omitempty"`
+}
 
-	// URL links to the candidate's official website.
-	URL string `json:"url,omitempty"`
-	RSS string `json:"rss_url,omitempty"`
+// MemberDetails holds the data of a member of Congress when it is requested
+// specifically about that member.
+type MemberDetails struct {
+	Member
+	ID             string       `json:"member_id"` // NOTE: JSON key is different from MemberSummary
+	Gender         string       `json:"gender"`
+	Party          string       `json:"current_party"` // NOTE: JSON key is different from MemberSummary
+	TimesTopics    string       `json:"times_topics_url,omitempty"`
+	TimesTag       string       `json:"times_tag,omitempty"`
+	MostRecentVote string       `json:"most_recent_vote,omitempty"`
+	Roles          []MemberRole `json:"roles,omitempty"`
+}
 
-	// Contact links to a candidate's online contact form.
-	Contact string `json:"contact_form,omitempty"`
+// MemberRole stores information about a candidate's positions in a single
+// session of a single chamber.
+type MemberRole struct {
+	Congress   string `json:"congress"`
+	Chamber    string `json:"chamber"`
+	Title      string `json:"title"`
+	ShortTitle string `json:"short_title"`
+	State      string `json:"state"`
+	Party      string `json:"party"`
+	Leadership string `json:"leadership_role,omitempty"`
+	FEC        string `json:"fed_candidate_id,omitempty"`
+	Seniority  string `json:"seniority"`
+	District   string `json:"district,omitempty"`
+	AtLarge    bool   `json:"at_large"`
+	OCD        string `json:"ocd_id,omitempty"`
+	StartDate  string `json:"start_date"`
+	EndDate    string `json:"end_date"`
+	Office     string `json:"office"`
+	Phone      string `json:"phone"`
+	Fax        string `json:"fax"`
+	Contact    string `json:"contact_form"`
 
-	// API links to the endpoint for information about only this member.
-	API string `json:"api_uri"`
+	// Sponsored is the number of bills sponsored in a session.
+	Sponsored int `json:"bills_sponsored"`
+	// Cosponsored is the number of bills sponsored in a session.
+	Cosponsored int `json:"bills_cosponsored"`
+
+	MissedVotesPct float32           `json:"missed_votes_pct"`
+	VotesWithParty float32           `json:"votes_with_party_pct"`
+	Committees     []MemberCommittee `json:"committees"`
+}
+
+// MemberCommittee is information about a politician's role on a committee
+// in a single session of Congress.
+type MemberCommittee struct {
+	Name string `json:"name"`
+
+	// Code is the abbreviation of the committee.
+	Code string `json:"code"`
+
+	// URL is the link to more information about the committee within the API.
+	URL string `json:"api_url"`
+
+	// Side indicates whether the politician was in the majority or minority
+	// on the committee in a single session.
+	Side string `json:"side"`
+
+	Title     string `json:"member"`
+	PartyRank int    `json:"rank_in_party"`
+	BeginDate string `json:"begin_date"`
+	EndDate   string `json:"end_date"`
+}
+
+// MemberSubcommittee is information about a politician's role on a subcommittee
+// in a single session of Congress.
+type MemberSubcommittee struct {
+	MemberCommittee
+	// Parent indicates the ID of the committee under which this
+	// subcommittee operates.
+	Parent string `json:"parent_committee_id"`
 }
 
 // getMembersResponse is the format of the response received from the
@@ -88,16 +168,16 @@ type getMembersResponse struct {
 }
 
 type getMembersResults struct {
-	Congress    string   `json:"congress"`
-	Chamber     string   `json:"chamber"`
-	ResultCount int      `json:"num_results"`
-	Offset      int      `json:"offset"`
-	Members     []Member `json:"members"`
+	Congress    string          `json:"congress"`
+	Chamber     string          `json:"chamber"`
+	ResultCount int             `json:"num_results"`
+	Offset      int             `json:"offset"`
+	Members     []MemberSummary `json:"members"`
 }
 
 // GetMembers fetches a list of members of a defined chamber of Congress ("house" or "senate")
 // in a particular session (i.e. 115).
-func (c *Client) GetMembers(congress int, chamber string) (members []Member, err error) {
+func (c *Client) GetMembers(congress int, chamber string) (members []MemberSummary, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%d/%s/members.json", c.Endpoint, congress, chamber), nil)
 	if err != nil {
@@ -119,6 +199,42 @@ func (c *Client) GetMembers(congress int, chamber string) (members []Member, err
 	}
 	if len(unmarshaled.Results) > 0 {
 		members = unmarshaled.Results[0].Members
+	}
+	return
+}
+
+// getMemberResponse is the format of the response received from the
+// Congress API "get member" endpoint.
+type getMemberResponse struct {
+	Status    string          `json:"status"`
+	Copyright string          `json:"copyright"`
+	Results   []MemberDetails `json:"results"`
+}
+
+// GetMember fetches detailed information about a single politician spanning
+// their congressional career
+func (c *Client) GetMember(id string) (member MemberDetails, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s.json", c.Endpoint, id), nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("X-API-Key", c.Key)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	var unmarshaled getMemberResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &unmarshaled)
+	if err != nil {
+		return
+	}
+	if len(unmarshaled.Results) > 0 {
+		member = unmarshaled.Results[0]
 	}
 	return
 }
