@@ -1,0 +1,3 @@
+# ProPublica Congress API Go SDK
+
+A Golang API client for interacting with the [ProPublica Congress API](https://www.propublica.org/datastore/api/propublica-congress-api), which provides access to some of the most extensive data available about the United States Congress, both its current sessions and going decades into the past. **This library is in no was affiliated with ProPublica or Congress.**
