@@ -14,14 +14,19 @@ type Member struct {
 	MiddleName string `json:"middle_name,omitempty"`
 	LastName   string `json:"last_name"`
 	Suffix     string `json:"suffix,omitempty"`
-	Birth      string `json:"date_of_birth"`
-	State      string `json:"state,omitempty"`
-	Leadership string `json:"leadership_role,omitempty"`
-	InOffice   bool   `json:"in_office"`
+	Twitter    string `json:"twitter_account,omitempty"`
+	Facebook   string `json:"facebook_account,omitempty"`
+	Youtube    string `json:"youtube_account,omitempty"`
 
-	Twitter   string `json:"twitter_account,omitempty"`
-	Facebook  string `json:"facebook_account,omitempty"`
-	Youtube   string `json:"youtube_account,omitempty"`
+	// URL links to the endpoint for information about only this member.
+	URL string `json:"api_uri"`
+	TrackingIDs
+}
+
+// TrackingIDs collect the ID numbers of a politician across various
+// websites tracking information about their actions. It is included in
+// most (but not all) results.
+type TrackingIDs struct {
 	Govtrack  string `json:"govtrack_id,omitempty"`
 	CSPAN     string `json:"cspan_id,omitempty"`
 	Votesmart string `json:"votesmart_id,omitempty"`
@@ -39,9 +44,6 @@ type Member struct {
 	// Website links to the candidate's official website.
 	Website string `json:"url,omitempty"`
 	RSS     string `json:"rss_url,omitempty"`
-
-	// URL links to the endpoint for information about only this member.
-	URL string `json:"api_uri"`
 }
 
 // MemberSummary holds the data of a member of Congress when sent
@@ -49,14 +51,20 @@ type Member struct {
 type MemberSummary struct {
 	Member
 	ID          string `json:"id"`
+	Birth       string `json:"date_of_birth"`
+	State       string `json:"state,omitempty"`
 	Title       string `json:"title"`
 	ShortTitle  string `json:"short_title"`
-	SenateClass string `json:"senate_class,omitempty"`
+	InOffice    bool   `json:"in_office"`
+	SenateClass string `json:"senate_class,omitempty"` // TODO: Is this a different field for House members?
 	StateRank   string `json:"state_rank,omitempty"`
 	Party       string `json:"party"`
+	Leadership  string `json:"leadership_role,omitempty"`
 	Office      string `json:"office,omitempty"`
 	Phone       string `json:"phone,omitempty"`
 	Fax         string `json:"fax,omitempty"`
+
+	TrackingIDs
 
 	// Contact links to a candidate's online contact form.
 	Contact string `json:"contact_form,omitempty"`
@@ -89,12 +97,31 @@ type MemberSummary struct {
 type MemberDetails struct {
 	Member
 	ID             string       `json:"member_id"` // NOTE: JSON key is different from MemberSummary
+	Birth          string       `json:"date_of_birth"`
 	Gender         string       `json:"gender"`
 	Party          string       `json:"current_party"` // NOTE: JSON key is different from MemberSummary
+	State          string       `json:"state,omitempty"`
+	InOffice       bool         `json:"in_office"`
 	TimesTopics    string       `json:"times_topics_url,omitempty"`
 	TimesTag       string       `json:"times_tag,omitempty"`
 	MostRecentVote string       `json:"most_recent_vote,omitempty"`
 	Roles          []MemberRole `json:"roles,omitempty"`
+	TrackingIDs
+}
+
+// MemberSearch holds the data of a member of Congress when it is requested
+// in a search specific to a state.
+type MemberSearch struct {
+	Member
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Title        string `json:"role"` // NOTE: JSON key is different than for MemberSummary and MemberRole
+	Gender       string `json:"gender"`
+	Party        string `json:"party"`
+	TimesTopics  string `json:"times_topics_url,omitempty"`
+	Seniority    string `json:"seniority,omitempty"`
+	NextElection string `json:"next_election,omitempty"`
+	URL          string `json:"api_uri"`
 }
 
 // MemberRole stores information about a candidate's positions in a single
@@ -238,35 +265,39 @@ func (c *Client) GetMember(id string) (member MemberDetails, err error) {
 	return
 }
 
-// GetChamberMembersByState fetches basic information about the congressional delegation
-// of a single chamber for a single state
-func (c *Client) GetChamberMembersByState(state, chamber string) (member MemberDetails, err error) {
-	// TODO
-	return
+// getMembersByStateResponse is the format of the response received from the
+// Congress API "get current members by state/district" endpoint.
+type getMembersByStateResponse struct {
+	Status    string         `json:"status"`
+	Copyright string         `json:"copyright"`
+	Results   []MemberSearch `json:"results"`
+}
 
-	// client := &http.Client{}
-	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/current.json", c.Endpoint, chamber, state), nil)
-	// if err != nil {
-	// 	return
-	// }
-	// req.Header.Add("X-API-Key", c.Key)
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return
-	// }
-	// var unmarshaled getNewMembersResponse
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return
-	// }
-	// err = json.Unmarshal(body, &unmarshaled)
-	// if err != nil {
-	// 	return
-	// }
-	// if len(unmarshaled.Results) > 0 {
-	// 	member = unmarshaled.Results.Members
-	// }
-	// return
+// GetChamberMembersByState fetches basic information about the congressional delegation
+// of a single chamber for a single state. ("state" param is case-insensitive two-character abbreviation.)
+func (c *Client) GetChamberMembersByState(state, chamber string) (members []MemberSearch, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/current.json", c.Endpoint, chamber, state), nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("X-API-Key", c.Key)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	var unmarshaled getMembersByStateResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &unmarshaled)
+	if err != nil {
+		return
+	}
+	members = unmarshaled.Results
+
+	return
 }
 
 // GetMembersByState fetches basic information about the entire congressional
