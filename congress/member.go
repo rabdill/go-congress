@@ -302,12 +302,17 @@ func (c *Client) GetChamberMembersByState(state, chamber string) (members []Memb
 
 // GetMembersByState fetches basic information about the entire congressional
 // delegation for a single state
-func (c *Client) GetMembersByState(state string) (member MemberDetails, err error) {
-	// TODO
+func (c *Client) GetMembersByState(state string) (members []MemberSearch, err error) {
+	members, err = c.GetChamberMembersByState(state, "house")
+	if err != nil {
+		return
+	}
+	senate, err := c.GetChamberMembersByState(state, "senate")
+	if err != nil {
+		return
+	}
+	members = append(members, senate...)
 	return
-
-	// c.GetChamberMembersByState("house", state)
-	// c.GetChamberMembersByState("senate", state)
 }
 
 // GetChamberMembersByDistrict fetches basic information about the congressional delegation
