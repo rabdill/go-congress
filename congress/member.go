@@ -317,33 +317,29 @@ func (c *Client) GetMembersByState(state string) (members []MemberSearch, err er
 
 // GetChamberMembersByDistrict fetches basic information about the congressional delegation
 // of a single chamber for a single district of a state.
-func (c *Client) GetChamberMembersByDistrict(state, district, chamber string) (member MemberDetails, err error) {
-	// TODO
-	return
+func (c *Client) GetChamberMembersByDistrict(state string, district int, chamber string) (members []MemberSearch, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/%d/current.json", c.Endpoint, chamber, state, district), nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("X-API-Key", c.Key)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	var unmarshaled getMembersByStateResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &unmarshaled)
+	if err != nil {
+		return
+	}
+	members = unmarshaled.Results
 
-	// client := &http.Client{}
-	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/%s/%s/%s/current.json", c.Endpoint, chamber, state, district), nil)
-	// if err != nil {
-	// 	return
-	// }
-	// req.Header.Add("X-API-Key", c.Key)
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return
-	// }
-	// var unmarshaled getNewMembersResponse
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return
-	// }
-	// err = json.Unmarshal(body, &unmarshaled)
-	// if err != nil {
-	// 	return
-	// }
-	// if len(unmarshaled.Results) > 0 {
-	// 	member = unmarshaled.Results.Members
-	// }
-	// return
+	return
 }
 
 // GetNewMembers fetches basic information about the first-time members
