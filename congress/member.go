@@ -139,6 +139,11 @@ type MemberInTransition struct {
 	District   string `json:"district,omitempty"`
 	StartDate  string `json:"start_date"`
 	URL        string `json:"api_uri"`
+
+	// Fields only included for departing members:
+	EndDate string `json:"end_date"`
+	Status  string `json:"status"`
+	Note    string `json:"note"`
 }
 
 // MemberRole stores information about a candidate's positions in a single
@@ -368,13 +373,17 @@ type getMembersInTransitionResponse struct {
 }
 
 type getMembersInTransitionResults struct {
-	Congress string               `json:"congress"`
-	Chamber  string               `json:"chamber"`
-	Members  []MemberInTransition `json:"members"`
+	Members []MemberInTransition `json:"members"`
 
-	// NOTE: This is the only place where num_results and offset are strings rather than ints
-	ResultCount string `json:"num_results"`
-	Offset      string `json:"offset"`
+	// NOTE: These two fields are excluded because there's no known pagination in
+	// the API yet, and because they appear inconsistently in results: When requesting
+	// new members, they're strings. When requesting departing members, they are ints.
+	// ResultCount int `json:"num_results"`
+	// Offset      int `json:"offset"`
+
+	// Fields only included in response for departing members:
+	Congress string `json:"congress"`
+	Chamber  string `json:"chamber"`
 }
 
 // GetNewMembers fetches basic information about the first-time members
@@ -382,6 +391,34 @@ type getMembersInTransitionResults struct {
 func (c *Client) GetNewMembers() (members []MemberInTransition, err error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/new.json", c.Endpoint), nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("X-API-Key", c.Key)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	var unmarshaled getMembersInTransitionResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &unmarshaled)
+	if err != nil {
+		return
+	}
+	if len(unmarshaled.Results) > 0 {
+		members = unmarshaled.Results[0].Members
+	}
+	return
+}
+
+// GetDepartingMembers fetches basic information about the outgoing members
+// of both chambers for a particular Congress.
+func (c *Client) GetDepartingMembers(congress int, chamber string) (members []MemberInTransition, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%d/%s/members/leaving.json", c.Endpoint, congress, chamber), nil)
 	if err != nil {
 		return
 	}
@@ -407,35 +444,4 @@ func (c *Client) GetNewMembers() (members []MemberInTransition, err error) {
 		members = append(members, unmarshaled.Results[1].Members...)
 	}
 	return
-}
-
-// GetDepartingMembers fetches basic information about the outgoing members
-// of both chambers for a particular Congress.
-func (c *Client) GetDepartingMembers(congress int, chamber string) (member MemberDetails, err error) {
-	// TODO
-	return
-
-	// client := &http.Client{}
-	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/%d/%s/members/leaving.json", c.Endpoint, congress, chamber), nil)
-	// if err != nil {
-	// 	return
-	// }
-	// req.Header.Add("X-API-Key", c.Key)
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return
-	// }
-	// var unmarshaled getNewMembersResponse
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return
-	// }
-	// err = json.Unmarshal(body, &unmarshaled)
-	// if err != nil {
-	// 	return
-	// }
-	// if len(unmarshaled.Results) > 0 {
-	// 	member = unmarshaled.Results.Members
-	// }
-	// return
 }
