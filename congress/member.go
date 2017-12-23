@@ -35,7 +35,7 @@ type TrackingIDs struct {
 	// politician's ID in their databases.
 	ICPSR string `json:"icpsr_id,omitempty"`
 
-	// CRP is the politician's ID from theCenter for Responsive Politics,
+	// CRP is the politician's ID from the Center for Responsive Politics,
 	// which runs OpenSecrets.org.
 	CRP string `json:"crp_id,omitempty"`
 
@@ -56,7 +56,7 @@ type MemberSummary struct {
 	Title       string `json:"title"`
 	ShortTitle  string `json:"short_title"`
 	InOffice    bool   `json:"in_office"`
-	SenateClass string `json:"senate_class,omitempty"` // TODO: Is this a different field for House members?
+	SenateClass string `json:"senate_class,omitempty"`
 	StateRank   string `json:"state_rank,omitempty"`
 	Party       string `json:"party"`
 	Leadership  string `json:"leadership_role,omitempty"`
@@ -87,9 +87,11 @@ type MemberSummary struct {
 	// DW-NOMINATE (Dynamic Weighted NOMINAl Three-step Estimation) estimation.
 	DWNominate float32 `json:"dw_nominate"`
 
-	// *tk no idea what these are
+	// IdealPoint indicates a politician's position on the left/right spectrum
 	IdealPoint string `json:"ideal_point"`
-	OCD        string `json:"ocd_id,omitempty"`
+
+	// OCD is the ID of the politician's district within the Open Civic Data project.
+	OCD string `json:"ocd_id,omitempty"`
 }
 
 // MemberDetails holds the data of a member of Congress when it is requested
@@ -126,7 +128,7 @@ type MemberSearch struct {
 
 // MemberInTransition is the format of data sent from ProPublica
 // about a single member when searching for members who are either
-// new or leaving office. It doesn't really look like the others.
+// new or leaving office. It doesn't really match the others.
 type MemberInTransition struct {
 	ID         string `json:"id"`
 	FirstName  string `json:"first_name"`
