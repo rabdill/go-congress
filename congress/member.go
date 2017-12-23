@@ -124,6 +124,23 @@ type MemberSearch struct {
 	URL          string `json:"api_uri"`
 }
 
+// MemberInTransition is the format of data sent from ProPublica
+// about a single member when searching for members who are either
+// new or leaving office. It doesn't really look like the others.
+type MemberInTransition struct {
+	ID         string `json:"id"`
+	FirstName  string `json:"first_name"`
+	MiddleName string `json:"middle_name,omitempty"`
+	LastName   string `json:"last_name"`
+	Suffix     string `json:"suffix,omitempty"`
+	Party      string `json:"party"`
+	Chamber    string `json:"chamber"`
+	State      string `json:"state"`
+	District   string `json:"district,omitempty"`
+	StartDate  string `json:"start_date"`
+	URL        string `json:"api_uri"`
+}
+
 // MemberRole stores information about a candidate's positions in a single
 // chamber of a single Congress.
 type MemberRole struct {
@@ -342,35 +359,54 @@ func (c *Client) GetChamberMembersByDistrict(state string, district int, chamber
 	return
 }
 
+// getMembersInTransitionResponse is the format of the response received from the
+// Congress API "get new members" and "get members leaving office" endpoints.
+type getMembersInTransitionResponse struct {
+	Status    string                          `json:"status"`
+	Copyright string                          `json:"copyright"`
+	Results   []getMembersInTransitionResults `json:"results"`
+}
+
+type getMembersInTransitionResults struct {
+	Congress string               `json:"congress"`
+	Chamber  string               `json:"chamber"`
+	Members  []MemberInTransition `json:"members"`
+
+	// NOTE: This is the only place where num_results and offset are strings rather than ints
+	ResultCount string `json:"num_results"`
+	Offset      string `json:"offset"`
+}
+
 // GetNewMembers fetches basic information about the first-time members
 // of either chamber.
-func (c *Client) GetNewMembers() (member MemberDetails, err error) {
-	// TODO
+func (c *Client) GetNewMembers() (members []MemberInTransition, err error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/new.json", c.Endpoint), nil)
+	if err != nil {
+		return
+	}
+	req.Header.Add("X-API-Key", c.Key)
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	var unmarshaled getMembersInTransitionResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &unmarshaled)
+	if err != nil {
+		return
+	}
+	// Results are broken down by chamber
+	if len(unmarshaled.Results) > 0 {
+		members = unmarshaled.Results[0].Members
+	}
+	if len(unmarshaled.Results) > 1 {
+		members = append(members, unmarshaled.Results[1].Members...)
+	}
 	return
-
-	// client := &http.Client{}
-	// req, err := http.NewRequest("GET", fmt.Sprintf("%s/members/new.json", c.Endpoint), nil)
-	// if err != nil {
-	// 	return
-	// }
-	// req.Header.Add("X-API-Key", c.Key)
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return
-	// }
-	// var unmarshaled getNewMembersResponse
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return
-	// }
-	// err = json.Unmarshal(body, &unmarshaled)
-	// if err != nil {
-	// 	return
-	// }
-	// if len(unmarshaled.Results) > 0 {
-	// 	member = unmarshaled.Results.Members
-	// }
-	// return
 }
 
 // GetDepartingMembers fetches basic information about the outgoing members
